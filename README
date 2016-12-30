@@ -1,0 +1,165 @@
+22-May-2002 Now deals with Nagra MECM, thanks to Vincent and his friend
+11-May-2002 Updated vdr patch to vdr-1.0.2
+29-Apr-2002 Variable xor value for different firmware versions
+25-Apr-2002 Nagra signature now OK; added CRC check
+17-Apr-2002 Nagra now working OK
+11-Apr-2002 Minor bug fixes; given up on Nagra
+09-Apr-2002 Changed PES filter to section filter (thanks Oller Amo)
+07-Apr-2002 Added Nagra; no longer need to specify program number
+05-Mar-2002 Various bug fixes
+03-Mar-2002 Added signature checking for Irdeto and Seca
+28-Feb-2002 Fix to Viaccess: NTV now works OK
+21-Feb-2002 Viaccess added
+20-Feb-2002 Original version
+
+====
+
+This is the SoftCAM code modified to communicate directly with the Seca 
+decryption algorithm. This avoids the need for a smart-card. It also works
+with Irdeto and Viaccess and Nagra.
+
+To run it as a stand-alone program, tune into the required channel and then
+type
+	mgcam
+If you want to incorporate it into 'vdr' (or any other program), you must patch
+the program so that it calls the ca_stop() method before it tunes into a
+channel, and then after tuning to the channel it must start a new thread which
+will run the ca_process() method. A suitable patch for 'vdr' is supplied.
+
+This works with the 0.9.4 version of the Convergence driver. For earlier
+versions (0.9.3), you need to remove the line that says "#define DO_XOR".
+
+Convergence have fixed their most recent CVS version so that this doesn't
+work any more. I'm going to stick with 0.9.4.
+
+A key file names SoftCam.Key is needed, in the same format as that used by
+Multidec version 8.
+
+Use the letter V to mark Viaccess keys in this file. Note that Viaccess channel
+IDs are 3 bytes.
+
+For Nagra, use N to mark the keys. I've tested with Polsat on Hotbird (for
+which the provider id is 7001). The verify key may be added to the key file
+as key 80.
+
+====
+
+Patching VDR (tested with version 1.0.2).
+
+These instructions assume that the MGCAM sources have been unpacked into
+/home/mgcam, and that we are building VDR in some other directory (currently 
+empty except for the VDR tarball).
+
+1. Untar the VDR sources:
+        tar -xvzf vdr-1.0.2.tgz
+
+2. Apply the patch (must be done from the same directory as the one where you
+did step 1):
+        patch -b -p1 < /home/mgcam/vdr-1.0.2.patch
+
+3. Copy the MGCAM sources into the subdirectory where they live:
+        cd vdr-1.0.2/libmgcam
+	cp /home/mgcam/*.cpp .
+        cp /home/mgcam/*.c .
+        cp /home/mgcam/*.h .
+
+4. Back to the previous directory, and make VDR:
+        cd ..
+        make
+
+====
+
+Different firmware versions:
+
+The control word must be xor-ed with a magic number before being given to the
+firmware; Convergence have taken to changing the magic xor number with 
+different versions of the firmware, in a lame attempt to stop this program
+from working. The xor number can be specified in the key file with a line
+like this:
+
+X 0 0 1234567812345678
+
+(the provider ID and Key ID should be 0).
+
+Suitable xor numbers for various firmware versions are:
+
+Version 0.9.3
+X 0 0 0000000000000000
+
+Version 0.9.4 and later CVS versions up to 2nd April
+X 0 0 5555AAAA9999BBBB
+
+CVS versions after 2nd April
+X 0 0 A7349473C84EF35D
+
+If you don't supply an xor value then 5555AAAA9999BBBB (the value for 0.9.4)
+is used, simply because this is the firmware version that I happen to use.
+
+====
+
+Frequently (?) asked questions:
+
+Q. Is this legal?
+A. Probably not. At the least, it will upset the television companies. Being
+sued would be a nuisance, even if you won your case.
+
+Q. Is this moral?
+A. No. Neither (in my opinion) is it moral for companies like Irdeto and
+Seca to charge television companies for their encryption systems, when they
+are so clearly incompetent and incapable of making a secure system.
+
+Q. Can I redistribute this code?
+A. That's up to you. How could I stop you without identifying myself?
+
+Q. Is this code issued under the GPL?
+A. The whole point of this code is to commit criminal acts, and you want to 
+know about its copyright?
+
+Q. Will this work with the Technotrend firmware?
+A. I don't think so. It requires the CA_SET_DESCR ioctl to be supported by the
+firmware. This was added by Convergence. I can only speculate as to why they
+did this.
+
+Q. Is this a major step forward in breaking the various encryption systems?
+A. No. It uses no knowledge about decryption that has not already been 
+made public. It just saves you having to buy a CAM; nothing more.
+
+Q. Can this be made to work with Conax, Videoguard etc?
+A. Not unless the decryption algorithm is already public.
+
+Q. Could the television companies change their encryption to defeat this?
+A. Yes, they could change the encryption system entirely. This is just a 
+matter of issuing new smart-cards to all the genuine subscribers. Then there 
+is a delay of a few weeks/months/years until someone cracks the new system.
+
+Q. Can I help?
+A. If anyone wants to help, I would appreciate any assistance adding any other
+new algorithms (Irdeto II, Conax, Cryptoworks, Videoguard etc etc).
+
+Q. What was wrong with Nagra in the previous version?
+A. Nothing, but I has the wrong verify key and various other problems that
+made me think it was not working.
+
+====
+
+Acknowlegments:
+Thanks are due to:
+
+Rupert Murdoch, for funding the cracking of his rivals' systems.
+
+Whoever at Convergence made the security hole that made this possible.
+
+The author of the Multidec SoftCam DLL, who discovered this technique,
+and whose work I have shamelessly plagiarized here. He is the real star.
+
+The authors of the Seca, Viacess and Nagra code which I've used.
+
+Everyone who tested my code and pointed out my numerous stupid mistakes.
+Let me know if you would like you name listed here: otherwise I'll keep
+you anonymous.
+
+====
+
+Author: Badfish
+
+fish_bad@hotmail.com
